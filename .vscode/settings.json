@@ -1,0 +1,16 @@
+{
+  "java.project.sourcePaths": ["src/main/java"],
+  "java.project.outputPath": "target/classes",
+  "java.project.referencedLibraries": [
+    "lib/**/*.jar"
+  ],
+  "java.test.config": {
+    "name": "Locadora Tests",
+    "workingDirectory": "${workspaceFolder}"
+  },
+  "editor.formatOnSave": true,
+  "java.compile.nullAnalysis.mode": "automatic",
+  "files.exclude": {
+    "**/target": false
+  }
+}

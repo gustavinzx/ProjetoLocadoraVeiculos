@@ -1,0 +1,20 @@
+# Maven
+target/
+*.class
+
+# IntelliJ / Eclipse
+.idea/
+*.iml
+.classpath
+.project
+.settings/
+
+# VS Code (mantém o .vscode/ mas ignora cache)
+.vscode/**.log
+
+# Banco de dados gerado em runtime
+locadora.db
+
+# OS
+.DS_Store
+Thumbs.db

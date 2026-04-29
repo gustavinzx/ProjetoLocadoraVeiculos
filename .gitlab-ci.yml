@@ -1,0 +1,118 @@
+# ============================================================
+#  Pipeline CI/CD — Locadora de Veículos
+#  45 testes no total: 33 JUnit + 12 Postman/Newman
+#  Dispara automaticamente a cada push
+# ============================================================
+
+image: maven:3.9.6-eclipse-temurin-17
+
+cache:
+  key: "$CI_COMMIT_REF_SLUG"
+  paths:
+    - .m2/repository
+
+variables:
+  MAVEN_OPTS: "-Dmaven.repo.local=.m2/repository -Djava.awt.headless=true"
+
+stages:
+  - build
+  - test-junit
+  - test-api
+  - report
+
+# ──────────────────────────────────────────────────────────────
+#  STAGE 1 — Compilar e empacotar o projeto
+# ──────────────────────────────────────────────────────────────
+build:
+  stage: build
+  script:
+    - echo "=== Compilando e empacotando o projeto ==="
+    - mvn package -DskipTests -B $MAVEN_OPTS
+    - echo "JAR gerado com sucesso"
+  artifacts:
+    paths:
+      - target/
+    expire_in: 1 hour
+
+# ──────────────────────────────────────────────────────────────
+#  STAGE 2 — Testes Unitários e de Integração (JUnit 5)
+#  CT-001 a CT-033
+# ──────────────────────────────────────────────────────────────
+test:junit:
+  stage: test-junit
+  script:
+    - echo "=== Executando 33 testes JUnit 5 (CT-001 a CT-033) ==="
+    - mvn test -B $MAVEN_OPTS
+    - echo "=== Resultado ==="
+    - cat target/surefire-reports/*.txt || true
+  artifacts:
+    when: always
+    paths:
+      - target/surefire-reports/
+    reports:
+      junit: target/surefire-reports/TEST-*.xml
+    expire_in: 30 days
+
+# ──────────────────────────────────────────────────────────────
+#  STAGE 3 — Testes de API REST (Postman / Newman)
+#  CT-034 a CT-045
+# ──────────────────────────────────────────────────────────────
+test:api:
+  stage: test-api
+  image: node:20-slim
+  before_script:
+    - apt-get update -qq && apt-get install -y -qq default-jre-headless wget > /dev/null
+    - java -version
+    - npm install -g newman newman-reporter-htmlextra --silent
+    - echo "Newman instalado $(newman --version)"
+  script:
+    - echo "=== Subindo a API Java em background ==="
+    - JAR=$(ls target/*-jar-with-dependencies.jar)
+    - java -jar $JAR &
+    - API_PID=$!
+    - echo "API iniciada com PID $API_PID"
+    - |
+      echo "Aguardando API na porta 8080..."
+      for i in $(seq 1 15); do
+        if wget -q --spider http://localhost:8080/api/veiculos 2>/dev/null; then
+          echo "API pronta apos ${i} tentativas!"
+          break
+        fi
+        echo "Tentativa $i/15 aguardando..."
+        sleep 2
+      done
+    - echo "=== Executando 12 testes de API com Newman (CT-034 a CT-045) ==="
+    - mkdir -p target/newman-results
+    - |
+      newman run postman/LocadoraVeiculos_API_Tests.postman_collection.json \
+        --reporters cli,junit,htmlextra \
+        --reporter-junit-export target/newman-results/newman-report.xml \
+        --reporter-htmlextra-export target/newman-results/newman-report.html \
+        --color on
+    - kill $API_PID || true
+  artifacts:
+    when: always
+    paths:
+      - target/newman-results/
+    reports:
+      junit: target/newman-results/newman-report.xml
+    expire_in: 30 days
+  dependencies:
+    - build
+
+# ──────────────────────────────────────────────────────────────
+#  STAGE 4 — Relatório final HTML
+# ──────────────────────────────────────────────────────────────
+report:html:
+  stage: report
+  script:
+    - echo "=== Gerando relatorio HTML dos testes JUnit ==="
+    - mvn surefire-report:report -B $MAVEN_OPTS
+  artifacts:
+    paths:
+      - target/site/
+      - target/newman-results/
+    expire_in: 30 days
+  allow_failure: true
+  dependencies:
+    - test:junit

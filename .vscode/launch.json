@@ -1,0 +1,21 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "java",
+      "name": "Rodar Locadora",
+      "request": "launch",
+      "mainClass": "Main",
+      "projectName": "ProjetoLocadoraVeiculos",
+      "console": "integratedTerminal"
+    },
+    {
+      "type": "java",
+      "name": "Debug Locadora",
+      "request": "launch",
+      "mainClass": "Main",
+      "projectName": "ProjetoLocadoraVeiculos",
+      "console": "integratedTerminal"
+    }
+  ]
+}
