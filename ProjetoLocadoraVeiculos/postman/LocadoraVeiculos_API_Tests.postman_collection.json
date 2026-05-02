@@ -1,0 +1,281 @@
+{
+  "info": {
+    "name": "Locadora de Veículos - API Tests",
+    "description": "Coleção de testes de API para o sistema de Locadora de Veículos.\nImporte no Postman e execute com a API rodando em localhost:8080.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8080/api", "type": "string" },
+    { "key": "veiculoId", "value": "", "type": "string" }
+  ],
+  "item": [
+    {
+      "name": "CT-034 | Auth - Login válido",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status 200 em login válido', () => {",
+              "  pm.response.to.have.status(200);",
+              "});",
+              "pm.test('Resposta contém mensagem de sucesso', () => {",
+              "  const json = pm.response.json();",
+              "  pm.expect(json.mensagem).to.include('sucesso');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/auth/login",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{ \"username\": \"admin\", \"senha\": \"admin123\" }"
+        }
+      }
+    },
+    {
+      "name": "CT-035 | Auth - Login inválido",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status 401 em login inválido', () => {",
+              "  pm.response.to.have.status(401);",
+              "});",
+              "pm.test('Resposta contém campo erro', () => {",
+              "  pm.expect(pm.response.json()).to.have.property('erro');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/auth/login",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{ \"username\": \"admin\", \"senha\": \"errada\" }"
+        }
+      }
+    },
+    {
+      "name": "CT-036 | GET /veiculos - Lista vazia inicialmente",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status 200', () => pm.response.to.have.status(200));",
+              "pm.test('Retorna um array', () => {",
+              "  pm.expect(pm.response.json()).to.be.an('array');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/veiculos"
+      }
+    },
+    {
+      "name": "CT-037 | POST /veiculos - Cadastrar veículo válido",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status 201', () => pm.response.to.have.status(201));",
+              "pm.test('Retorna veículo com ID', () => {",
+              "  const v = pm.response.json();",
+              "  pm.expect(v.id).to.be.a('number').and.greaterThan(0);",
+              "  pm.expect(v.marca).to.equal('Toyota');",
+              "  pm.expect(v.disponivel).to.equal(true);",
+              "  pm.collectionVariables.set('veiculoId', v.id);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/veiculos",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{ \"marca\": \"Toyota\", \"modelo\": \"Corolla\", \"ano\": 2022 }"
+        }
+      }
+    },
+    {
+      "name": "CT-038 | POST /veiculos - Dados inválidos retorna 400",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status 400 para dados inválidos', () => {",
+              "  pm.response.to.have.status(400);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/veiculos",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{ \"marca\": \"\", \"modelo\": \"Corolla\", \"ano\": 2022 }"
+        }
+      }
+    },
+    {
+      "name": "CT-039 | PUT /veiculos/{id} - Atualizar veículo",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status 200 na atualização', () => pm.response.to.have.status(200));",
+              "pm.test('Mensagem de confirmação', () => {",
+              "  pm.expect(pm.response.json().mensagem).to.exist;",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "PUT",
+        "url": "{{baseUrl}}/veiculos/{{veiculoId}}",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{ \"marca\": \"Toyota\", \"modelo\": \"Camry\", \"ano\": 2023 }"
+        }
+      }
+    },
+    {
+      "name": "CT-040 | POST /veiculos/{id}/alugar - Alugar veículo",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status 200 ao alugar', () => pm.response.to.have.status(200));",
+              "pm.test('Mensagem de sucesso', () => {",
+              "  pm.expect(pm.response.json().mensagem).to.include('sucesso');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/veiculos/{{veiculoId}}/alugar"
+      }
+    },
+    {
+      "name": "CT-041 | POST /veiculos/{id}/alugar - Alugar novamente retorna 400",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status 400 ao alugar veículo já alugado', () => {",
+              "  pm.response.to.have.status(400);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/veiculos/{{veiculoId}}/alugar"
+      }
+    },
+    {
+      "name": "CT-042 | GET /veiculos/disponiveis - Não lista veículo alugado",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status 200', () => pm.response.to.have.status(200));",
+              "pm.test('Veículo alugado não aparece na lista', () => {",
+              "  const lista = pm.response.json();",
+              "  const id = pm.collectionVariables.get('veiculoId');",
+              "  const encontrado = lista.find(v => String(v.id) === String(id));",
+              "  pm.expect(encontrado).to.be.undefined;",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/veiculos/disponiveis"
+      }
+    },
+    {
+      "name": "CT-043 | POST /veiculos/{id}/devolver - Devolver veículo",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status 200 ao devolver', () => pm.response.to.have.status(200));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/veiculos/{{veiculoId}}/devolver"
+      }
+    },
+    {
+      "name": "CT-044 | DELETE /veiculos/{id} - Remover veículo disponível",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status 200 ao remover', () => pm.response.to.have.status(200));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "DELETE",
+        "url": "{{baseUrl}}/veiculos/{{veiculoId}}"
+      }
+    },
+    {
+      "name": "CT-045 | DELETE /veiculos/9999 - ID inexistente retorna 404",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status 404 para ID inexistente', () => {",
+              "  pm.response.to.have.status(404);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "DELETE",
+        "url": "{{baseUrl}}/veiculos/9999"
+      }
+    }
+  ]
+}
